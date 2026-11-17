@@ -1,5 +1,4 @@
 require("dotenv").config({ path: __dirname + "/.env" });
-console.log("Usuario:", process.env.DB_USER, "| Base:", process.env.DB_DATABASE);
 
 const express = require("express");
 const cors = require("cors");
@@ -89,6 +88,7 @@ app.get("/api/wec/pilotos", async (req, res) => {
         res.status(500).json({ mensaje: "Error al consultar la base de datos." });
     }
 });
+// Autos de cada equipo con su categoría
 app.get("/api/wec/vehiculos", async (req, res) => {
     try {
         const consulta = `
@@ -108,34 +108,10 @@ app.get("/api/wec/vehiculos", async (req, res) => {
         res.status(500).json({ mensaje: "Error al consultar la base de datos." });
     }
 });
-app.listen(PORT, () => {
-    console.log("Servidor escuchando en el puerto " + PORT);
-    app.get("/api/wec/neumaticos", async (req, res) => {
-        try {
-            const consulta = `
-            SELECT
-                c.Nombre AS Categoria,
-                n.Marca,
-                n.Tipo,
-                n.Durabilidad,
-                n.Agarre
-            FROM categoria_neumatico AS cn
-            INNER JOIN categoria AS c
-                ON cn.FK_Categoria_ID = c.Categoria_ID
-            INNER JOIN neumatico AS n
-                ON cn.FK_ID_Neumatico = n.ID_neumatico
-            ORDER BY c.Nombre, n.Agarre DESC;
-        `;
-            const [filas] = await pool.query(consulta);
-            res.json(filas);
-        } catch (error) {
-            console.error("Error al consultar neumáticos:", error.message);
-            res.status(500).json({ mensaje: "Error al consultar la base de datos." });
-        }
-    });
-    app.get("/api/wec/carreras", async (req, res) => {
-        try {
-            const consulta = `
+// Calendario: carrera + circuito + clima
+app.get("/api/wec/carreras", async (req, res) => {
+    try {
+        const consulta = `
             SELECT
                 c.Carrera_ID,
                 c.Nombre,
@@ -155,16 +131,17 @@ app.listen(PORT, () => {
                 ON c.Clima_ID = cl.Clima_ID
             ORDER BY c.Fecha;
         `;
-            const [filas] = await pool.query(consulta);
-            res.json(filas);
-        } catch (error) {
-            console.error("Error al consultar carreras:", error.message);
-            res.status(500).json({ mensaje: "Error al consultar la base de datos." });
-        }
-    });
-    app.get("/api/wec/carreras/:id/resultados", async (req, res) => {
-        try {
-            const consulta = `
+        const [filas] = await pool.query(consulta);
+        res.json(filas);
+    } catch (error) {
+        console.error("Error al consultar carreras:", error.message);
+        res.status(500).json({ mensaje: "Error al consultar la base de datos." });
+    }
+});
+// Resultados de una carrera (:id = Carrera_ID)
+app.get("/api/wec/carreras/:id/resultados", async (req, res) => {
+    try {
+        const consulta = `
             SELECT
                 pa.Posicion_final,
                 p.Nombre AS Piloto,
@@ -184,17 +161,18 @@ app.listen(PORT, () => {
                 CAST(pa.Posicion_final AS UNSIGNED),
                 pa.Tiempo_total;
         `;
-            // El "?" se reemplaza de forma segura por el valor del arreglo
-            const [filas] = await pool.query(consulta, [req.params.id]);
-            res.json(filas);
-        } catch (error) {
-            console.error("Error al consultar resultados:", error.message);
-            res.status(500).json({ mensaje: "Error al consultar la base de datos." });
-        }
-    });
-    app.get("/api/wec/estadisticas", async (req, res) => {
-        try {
-            const consultaPodios = `
+        // El "?" se reemplaza de forma segura por el valor del arreglo
+        const [filas] = await pool.query(consulta, [req.params.id]);
+        res.json(filas);
+    } catch (error) {
+        console.error("Error al consultar resultados:", error.message);
+        res.status(500).json({ mensaje: "Error al consultar la base de datos." });
+    }
+});
+// Estadísticas: podios, penalizaciones y vueltas
+app.get("/api/wec/estadisticas", async (req, res) => {
+    try {
+        const consultaPodios = `
             SELECT e.Nombre AS Nombre,
                    COUNT(DISTINCT pa.Carrera_ID, pa.Vehiculo_ID) AS Total
             FROM participacion AS pa
@@ -204,7 +182,7 @@ app.listen(PORT, () => {
             ORDER BY Total DESC, e.Nombre
             LIMIT 5;
         `;
-            const consultaPenalizaciones = `
+        const consultaPenalizaciones = `
             SELECT p.Nombre AS Nombre, COUNT(*) AS Total
             FROM participacion AS pa
             INNER JOIN piloto AS p ON pa.Piloto_ID = p.Piloto_ID
@@ -213,7 +191,7 @@ app.listen(PORT, () => {
             ORDER BY Total DESC, p.Nombre
             LIMIT 5;
         `;
-            const consultaVueltas = `
+        const consultaVueltas = `
             SELECT p.Nombre AS Nombre, SUM(CAST(pa.Vueltas AS UNSIGNED)) AS Total
             FROM participacion AS pa
             INNER JOIN piloto AS p ON pa.Piloto_ID = p.Piloto_ID
@@ -221,16 +199,42 @@ app.listen(PORT, () => {
             ORDER BY Total DESC, p.Nombre
             LIMIT 5;
         `;
-            const [[podios], [penalizaciones], [vueltas]] = await Promise.all([
-                pool.query(consultaPodios),
-                pool.query(consultaPenalizaciones),
-                pool.query(consultaVueltas)
-            ]);
-            res.json({ podios, penalizaciones, vueltas });
-        } catch (error) {
-            console.error("Error al consultar estadísticas:", error.message);
-            res.status(500).json({ mensaje: "Error al consultar la base de datos." });
-        }
-    });
+        const [[podios], [penalizaciones], [vueltas]] = await Promise.all([
+            pool.query(consultaPodios),
+            pool.query(consultaPenalizaciones),
+            pool.query(consultaVueltas)
+        ]);
+        res.json({ podios, penalizaciones, vueltas });
+    } catch (error) {
+        console.error("Error al consultar estadísticas:", error.message);
+        res.status(500).json({ mensaje: "Error al consultar la base de datos." });
+    }
+});
+// Neumáticos permitidos por categoría
+app.get("/api/wec/neumaticos", async (req, res) => {
+    try {
+        const consulta = `
+            SELECT
+                c.Nombre AS Categoria,
+                n.Marca,
+                n.Tipo,
+                n.Durabilidad,
+                n.Agarre
+            FROM categoria_neumatico AS cn
+            INNER JOIN categoria AS c
+                ON cn.FK_Categoria_ID = c.Categoria_ID
+            INNER JOIN neumatico AS n
+                ON cn.FK_ID_Neumatico = n.ID_neumatico
+            ORDER BY c.Nombre, n.Agarre DESC;
+        `;
+        const [filas] = await pool.query(consulta);
+        res.json(filas);
+    } catch (error) {
+        console.error("Error al consultar neumáticos:", error.message);
+        res.status(500).json({ mensaje: "Error al consultar la base de datos." });
+    }
+});
+app.listen(PORT, () => {
+    console.log("Servidor escuchando en el puerto " + PORT);
 });
 

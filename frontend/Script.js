@@ -90,7 +90,7 @@ function adaptarWec(filas) {
       position: String(i + 1),
       points: String(f.Puntos),
       wins: String(f.Victorias),
-      categoria: f.Categoria,      // NUEVO
+      categoria: f.Categoria,
       Driver: {
         givenName: partes[0],
         familyName: partes.slice(1).join(" "),
@@ -106,6 +106,7 @@ function adaptarWec(filas) {
     };
   });
 }
+//Carga los autos del WEC
 async function cargarAutos() {
   const respuesta = await fetch(URL_WEC_AUTOS);
   if (!respuesta.ok) throw new Error("Error HTTP " + respuesta.status);
@@ -118,7 +119,7 @@ async function cargarAutos() {
   });
 }
 // Guardas a los pilotos que estan en la API permitiendo que la pagina funcione si algo falla muestra error
-// NUEVO: según la serie, pide los datos a la API de F1 o a nuestro backend
+// según la serie, pide los datos a la API de F1 o a nuestro backend
 async function cargarPilotos() {
   const estado = document.getElementById("estado");
   estado.textContent = "Cargando…";
@@ -149,9 +150,10 @@ async function cargarPilotos() {
     estado.textContent = serie === "f1"
       ? "No se pudieron cargar los datos. Revisa tu conexión y recarga la página."
       : "No se pudo leer la base de datos. ¿Está corriendo el backend (npm run dev)?";
+      console.error(error);
   }
 }
-
+//Filtra la lista de pilotos según la categoría seleccionada
 function filtrarCategoria(categoria) {
   categoriaActual = categoria;
   pilotos = todosLosPilotos
@@ -168,7 +170,7 @@ function armarEquipos() {
       equipos.set(c.constructorId, {
         id: c.constructorId,
         nombre: c.name,
-        nacionalidad: c.nationality || "",     // NUEVO
+        nacionalidad: c.nationality || "",
         puntos: 0,
         pilotos: []
       });
@@ -195,7 +197,7 @@ function crearBoton(texto, id) {
   boton.addEventListener("click", () => elegirEquipo(id));
   return boton;
 }
-
+//Crea un botón de navegación para una sección, configurando sus clases y el evento de clic para activar la vista, cambiar estilos y mostrar el contenido.
 function crearBotonSeccion(texto, id, mostrar) {
   const boton = document.createElement("button");
   boton.type = "button";
@@ -225,6 +227,7 @@ function llenarFiltro() {
     .forEach(e => contenedor.appendChild(crearBoton(e.nombre, e.id)));
   marcarActivo("");
 }
+//Convierte una cadena de fecha en un objeto con diferentes formatos legibles.  
 function formatearFecha(texto) {
   // "T00:00:00" hace que la fecha se lea en hora local (sin desfase de un día)
   const fecha = new Date(texto + "T00:00:00");
@@ -305,15 +308,9 @@ function mostrarPrincipal() {
   cont.innerHTML = `
     ${categorias}
     <h2 class="titulo">Podio del campeonato</h2>
-    ...el resto igual...`;
-
-  cont.innerHTML = `
-    <h2 class="titulo">Podio del campeonato</h2>
     <div class="podio">${podio}</div>
-
     <h2 class="titulo">${CONFIG[serie].equipos}</h2>
     <div class="equipos">${tarjetasEquipo}</div>
-
     <details>
       <summary>Clasificación completa</summary>
       <table class="table table-dark table-sm tabla">
@@ -321,6 +318,9 @@ function mostrarPrincipal() {
         <tbody>${filas}</tbody>
       </table>
     </details>`;
+
+  cont.querySelectorAll(".equipo-card").forEach(b =>
+    b.addEventListener("click", () => elegirEquipo(b.dataset.id)));
 
   cont.querySelectorAll(".cat").forEach(b =>
     b.addEventListener("click", () => {
@@ -342,7 +342,7 @@ function mostrarEscuderia(id) {
       <h2>${e.nombre}</h2>
       <p>${lugar}.º en constructores · ${e.puntos} puntos${e.nacionalidad ? " · " + e.nacionalidad : ""}</p>
     </div>
-    <div class="pilotos"></div>}`;
+    <div class="pilotos"></div>`;
 
 
   const caja = cont.querySelector(".pilotos");
@@ -413,7 +413,7 @@ const capas = [document.getElementById("fondoA"), document.getElementById("fondo
 let capaActiva = -1;
 // Precarga el fondo para permitir la animacion
 function cambiarFondo(id) {
-  const ruta = CONFIG[serie].fondos + (id || "main") + ".jpg";   // NUEVO: carpeta según la serie
+  const ruta = CONFIG[serie].fondos + (id || "main") + ".jpg";   // carpeta según la serie
   const img = new Image();
   img.onload = () => {
     const entrante = capas[capaActiva === 0 ? 1 : 0];
@@ -425,13 +425,13 @@ function cambiarFondo(id) {
   };
   img.onerror = () => {
     console.warn("No se encontró", ruta);
-    // NUEVO: si no hay imagen, se quita el fondo anterior (para no dejar uno de F1 en WEC)
+    // si no hay imagen, se quita el fondo anterior (para no dejar uno de F1 en WEC)
     if (capas[capaActiva]) capas[capaActiva].classList.remove("activa");
   };
   img.src = ruta;
 }
 
-// ===== NUEVO: botón que cambia entre F1 y WEC =====
+// ===== botón que cambia entre F1 y WEC =====
 function cambiarSerie() {
   serie = serie === "f1" ? "wec" : "f1";
   categoriaActual = "";
@@ -492,10 +492,10 @@ async function mostrarCalendario() {
     carreras = await respuesta.json();
   } catch (error) {
     cont.innerHTML = `<p>No se pudo cargar el calendario.</p>`;
-    cont.querySelectorAll(".carrera").forEach(b =>
-      b.addEventListener("click", () => mostrarResultados(Number(b.dataset.id))));
+
     return;
   }
+
 
   const tarjetas = carreras.map(c => {
     const f = formatearFecha(c.Fecha);
@@ -515,6 +515,8 @@ async function mostrarCalendario() {
   cont.innerHTML = `
     <h2 class="titulo">Calendario</h2>
     <div class="calendario">${tarjetas}</div>`;
+  cont.querySelectorAll(".carrera").forEach(b =>
+    b.addEventListener("click", () => mostrarResultados(Number(b.dataset.id))));
 }
 async function mostrarResultados(id) {
   const carrera = carreras.find(c => c.Carrera_ID === id);

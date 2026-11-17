@@ -1,3 +1,4 @@
+/* Variables de color */
 :root {
   --bg: #0d0d0d;
   --mint: #a3e4d7;
@@ -17,7 +18,7 @@ body {
   font-family: Georgia, "Times New Roman", serif;
 }
 
-
+/* Fondos con transición */
 .fondo {
   position: fixed;
   inset: 0;
@@ -95,7 +96,7 @@ h2.titulo {
   font-weight: normal;
 }
 
-
+/* Podio */
 .podio {
   display: grid;
   gap: .75rem;
@@ -136,7 +137,7 @@ h2.titulo {
   padding-block: 1.8rem;
 }
 
-
+/* Tarjetas de equipo */
 .equipos {
   display: grid;
   gap: .6rem;
@@ -192,7 +193,7 @@ summary {
   margin-top: .8rem;
 }
 
-
+/* Página de un equipo */
 .cabecera-equipo {
   border-left: 6px solid var(--acento);
   padding-left: 1rem;
@@ -238,7 +239,7 @@ summary {
   margin: .15rem 0;
   color: #ccc;
 }
-
+/* Botón Radio check */
 .radio {
   margin-top: .8rem;
   padding: .4rem .8rem;
@@ -283,7 +284,7 @@ summary {
 .btn-serie:hover {
   filter: brightness(1.15);
 }
-
+/* Tarjetas de autos */
 .autos {
   display: grid;
   gap: .9rem;
@@ -326,7 +327,7 @@ summary {
 .auto li span {
   color: #999;
 }
-
+/* Nivel del piloto */
 .nivel {
   display: inline-block;
   font-size: .7rem;
@@ -377,7 +378,7 @@ summary {
   height: 100%;
   background: var(--acento);
 }
-
+/* Calendario */
 .calendario {
   display: grid;
   gap: .6rem;
@@ -445,7 +446,7 @@ summary {
   letter-spacing: .08em;
   color: #bbb;
 }
-
+/* Resultados de una carrera */
 .volver {
   font: inherit;
   background: transparent;
@@ -463,7 +464,7 @@ summary {
 .resultados tr.penalizado td {
   color: #ff8a80;
 }
-
+/* Estadísticas */
 .rankings {
   display: grid;
   gap: .9rem;
@@ -508,7 +509,7 @@ summary {
   height: 100%;
   background: var(--acento);
 }
-
+/* Filtro por categoría */
 .categorias {
   display: flex;
   gap: .5rem;
